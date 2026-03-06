@@ -298,8 +298,8 @@ function Hero() {
               {s.value}
               {s.unit && <span style={{ fontSize: 14, marginLeft: 4, fontWeight: 700 }}>{s.unit}</span>}
             </div>
-            <div style={{ fontSize: isCenter ? 14 : 12, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: s.textMuted }}>{s.sub}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 12, lineHeight: 1.5, color: s.textMuted }}>{s.sub}</div>
           </div>
           )
         })}

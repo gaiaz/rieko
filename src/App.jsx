@@ -263,7 +263,7 @@ function Hero() {
 
           // Dimensioni responsive
           const cW = isMobile ? 200 : 320
-          const sW = isMobile ? 130 : 250
+          const sW = isMobile ? 130 : 290
           const overlapStart = isMobile ? -60 : -100
           const overlapEnd   = isMobile ? -20 : -40
           const overlapSpread = isMobile ? 12 : 56
@@ -274,7 +274,7 @@ function Hero() {
             : overlapStart + ((overlapEnd - overlapStart) * ep) + (overlapSpread * progress * ep)
           const rotation = s.rot * rotScale * (0.1 + 0.9 * ep) * (1 - progress * ep)
           const vertOffset = isCenter ? 0 : vOff * ep * (1 - progress)
-          const width = isCenter ? cW : sW + (isMobile ? 0 : 40 * progress * ep)
+          const width = isCenter ? cW : sW
           const zIndex = isCenter ? 3 : i === 0 ? 1 : 2
           return (
           <div key={i} style={{

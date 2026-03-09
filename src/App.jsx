@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import ChiSiamo from './pages/ChiSiamo.jsx'
 import bgPng from './assets/bg.png'
 import iconDistribuzione from './assets/distribuzione.svg'
 import iconComunicazione from './assets/comunicazione.svg'
@@ -49,6 +51,7 @@ function Nav() {
   const [solid, setSolid] = useState(false)
   const [active, setActive] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
 
   useEffect(() => {
     const fn = () => setSolid(window.scrollY > 60)
@@ -63,7 +66,7 @@ function Nav() {
   }, [menuOpen])
 
   const links = [
-    { href: '#chi-siamo', label: 'Chi siamo' },
+    { href: '/chi-siamo', label: 'Chi siamo', internal: true },
     { href: '#prodotti', label: 'Prodotti' },
     { href: '#partnership', label: 'Partnership' },
     { href: '#assistenza', label: 'Assistenza' },
@@ -74,7 +77,9 @@ function Nav() {
     <nav className={`top${solid ? ' scrolled' : ''}`}>
       <div className="c">
         <div className="inner">
-          <Logo color={menuOpen ? '#F7F4EE' : (solid ? '#111' : '#F7F4EE')} height={36} />
+          <Link to="/" style={{ lineHeight: 0 }}>
+            <Logo color={menuOpen ? '#F7F4EE' : (solid ? '#111' : '#F7F4EE')} height={36} />
+          </Link>
 
           {/* pill-nav desktop */}
           <div className="nav-links" style={{
@@ -85,21 +90,26 @@ function Nav() {
             border: '1px solid',
             borderColor: solid ? 'rgba(17,17,17,0.08)' : 'rgba(247,244,238,0.15)',
           }}>
-            {links.map(l => (
-              <a key={l.href} href={l.href}
-                onMouseEnter={() => setActive(l.href)}
-                onMouseLeave={() => setActive(null)}
-                style={{
-                  fontSize: 13, fontWeight: 500, padding: '7px 16px',
-                  borderRadius: 100, transition: 'all .2s',
-                  background: active === l.href
+            {links.map(l => {
+              const isCurrent = l.internal && location.pathname === l.href
+              const isHovered = active === l.href
+              const style = {
+                fontSize: 13, fontWeight: isCurrent ? 700 : 500,
+                padding: '7px 16px', borderRadius: 100, transition: 'all .2s',
+                position: 'relative',
+                background: isCurrent
+                  ? (solid ? 'rgba(58,106,26,0.10)' : 'rgba(197,224,122,0.15)')
+                  : isHovered
                     ? (solid ? 'rgba(17,17,17,0.08)' : 'rgba(247,244,238,0.15)')
                     : 'transparent',
-                  color: solid ? (active === l.href ? '#111' : 'rgba(17,17,17,0.55)') : (active === l.href ? '#F7F4EE' : 'rgba(247,244,238,0.6)'),
-                }}>
-                {l.label}
-              </a>
-            ))}
+                color: isCurrent
+                  ? (solid ? '#3A6A1A' : '#C5E07A')
+                  : solid ? (isHovered ? '#111' : 'rgba(17,17,17,0.55)') : (isHovered ? '#F7F4EE' : 'rgba(247,244,238,0.6)'),
+              }
+              return l.internal
+                ? <Link key={l.href} to={l.href} onMouseEnter={() => setActive(l.href)} onMouseLeave={() => setActive(null)} style={style}>{l.label}</Link>
+                : <a key={l.href} href={l.href} onMouseEnter={() => setActive(l.href)} onMouseLeave={() => setActive(null)} style={style}>{l.label}</a>
+            })}
           </div>
 
           {/* CTA desktop */}
@@ -132,12 +142,12 @@ function Nav() {
     {/* Overlay menu mobile */}
     <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 48 }}>
-        {links.map(l => (
-          <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
-            style={{ fontSize: 'clamp(28px, 8vw, 40px)', fontWeight: 800, color: '#F7F4EE', letterSpacing: '-.02em', padding: '8px 0', borderBottom: '1px solid rgba(247,244,238,.08)' }}>
-            {l.label}
-          </a>
-        ))}
+        {links.map(l => {
+          const style = { fontSize: 'clamp(28px, 8vw, 40px)', fontWeight: 800, color: '#F7F4EE', letterSpacing: '-.02em', padding: '8px 0', borderBottom: '1px solid rgba(247,244,238,.08)' }
+          return l.internal
+            ? <Link key={l.href} to={l.href} onClick={() => setMenuOpen(false)} style={style}>{l.label}</Link>
+            : <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={style}>{l.label}</a>
+        })}
       </nav>
       <a href="#contatti" className="btn btn-lime" onClick={() => setMenuOpen(false)}
         style={{ fontSize: 15, padding: '14px 32px', alignSelf: 'flex-start' }}>
@@ -346,7 +356,7 @@ function Carousel({ images }) {
 }
 
 /* ── Chi siamo ────────────────────────────────────────────── */
-function ChiSiamo() {
+function ChiSiamoSection() {
   return (
     <section id="chi-siamo" className="s" style={{ background: `#F7F4EE url(${bgPng}) center center / cover no-repeat` }}>
       <div className="c">
@@ -503,6 +513,53 @@ function Prodotti() {
   )
 }
 
+/* ── Count-up ─────────────────────────────────────────────── */
+// Parsa "-30%", "-15%CO₂", "+25%" → { prefix, number, suffix }
+function parseMetric(metric) {
+  const m = metric.match(/^([+-]?)(\d+)(.*)$/)
+  if (!m) return { prefix: '', number: 0, suffix: metric }
+  return { prefix: m[1], number: parseInt(m[2], 10), suffix: m[3] }
+}
+
+function AnimatedMetric({ metric }) {
+  const { prefix, number, suffix } = parseMetric(metric)
+  const [count, setCount] = useState(0)
+  const [started, setStarted] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStarted(true); io.disconnect() } },
+      { threshold: 0.5 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!started) return
+    const DURATION = 1200
+    const DELAY = 200
+    let raf
+    let t0
+    const tick = (now) => {
+      if (!t0) t0 = now
+      const elapsed = now - t0 - DELAY
+      if (elapsed < 0) { raf = requestAnimationFrame(tick); return }
+      const p = Math.min(elapsed / DURATION, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setCount(Math.round(eased * number))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [started, number])
+
+  return <span ref={ref}>{prefix}{count}{suffix}</span>
+}
+
 /* ── Impatto ──────────────────────────────────────────────── */
 function Impatto() {
   return (
@@ -519,7 +576,7 @@ function Impatto() {
               <div key={i} className={`impact-item r d${i + 1}`}>
                 <div className="impact-meta">
                   <img src={item.icon} alt="" className="impact-icon" />
-                  <span className="impact-pill">{item.metric}</span>
+                  <span className="impact-pill"><AnimatedMetric metric={item.metric} /></span>
                 </div>
                 <div className="impact-t">{item.t}</div>
                 <div className="impact-d">{item.d}</div>
@@ -533,7 +590,14 @@ function Impatto() {
 }
 
 /* ── Partnership ──────────────────────────────────────────── */
+const partnershipItems = [
+  { n: '01', t: 'Ingresso nel mercato', d: "Dal posizionamento ai canali distributivi, fino alla formazione e all'assistenza sul campo." },
+  { n: '02', t: 'Dialogo istituzionale', d: 'Supporto strutturato con istituzioni e stakeholder, basato su dati concreti e obiettivi misurabili.' },
+  { n: '03', t: 'Comunicazione responsabile', d: 'Chiarezza e credibilità che costruiscono fiducia nel tempo, senza greenwashing.' },
+]
+
 function Partnership() {
+
   return (
     <section id="partnership" className="s" style={{ background: `#F7F4EE url(${bgPng}) center center / cover no-repeat` }}>
       <div className="c">
@@ -543,7 +607,7 @@ function Partnership() {
         </h2>
 
         <div className="two-col">
-          <div>
+          <div style={{ position: 'sticky', top: 80, alignSelf: 'start' }}>
             <p className="body-lg r" style={{ marginBottom: 20 }}>
               Molte soluzioni sostenibili non falliscono per mancanza di valore, ma perché non trovano il giusto supporto per entrare nel mercato.
             </p>
@@ -554,15 +618,16 @@ function Partnership() {
               <a href="#contatti" className="btn btn-dark">Proponi una partnership →</a>
             </div>
           </div>
-          <div className="cards-grid" style={{ gridTemplateColumns: '1fr', gap: 12 }}>
-            {[
-              { t: 'Ingresso nel mercato', d: 'Dal posizionamento ai canali distributivi, fino alla formazione e all\'assistenza.' },
-              { t: 'Dialogo istituzionale', d: 'Supporto con istituzioni e stakeholder, basato su dati concreti.' },
-              { t: 'Comunicazione responsabile', d: 'Chiarezza e credibilità che costruiscono fiducia nel tempo.' },
-            ].map((item, i) => (
-              <div key={i} className={`card r d${i + 1}`}>
-                <div className="card-t">{item.t}</div>
-                <div className="card-d">{item.d}</div>
+
+          {/* Cards */}
+          <div className="r d2" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {partnershipItems.map((item, i) => (
+              <div key={i} className="pcard">
+                <div className="pcard-header">
+                  <span className="pcard-n">{item.n}</span>
+                  <div className="pcard-t">{item.t}</div>
+                </div>
+                <div className="pcard-d">{item.d}</div>
               </div>
             ))}
           </div>
@@ -693,7 +758,7 @@ function Footer() {
           <div className="footer-links">
             <div className="footer-col">
               <span className="footer-col-title">Pagine</span>
-              <a href="#chi-siamo">Chi siamo</a>
+              <Link to="/chi-siamo">Chi siamo</Link>
               <a href="#prodotti">Prodotti</a>
               <a href="#partnership">Partnership</a>
               <a href="#assistenza">Assistenza</a>
@@ -718,14 +783,13 @@ function Footer() {
   )
 }
 
-/* ── App ──────────────────────────────────────────────────── */
-export default function App() {
+/* ── Homepage ─────────────────────────────────────────────── */
+function Homepage() {
   useReveal()
   return (
     <>
-      <Nav />
       <Hero />
-      <ChiSiamo />
+      <ChiSiamoSection />
       <IlProblema />
       <Audience />
       <Prodotti />
@@ -734,6 +798,29 @@ export default function App() {
       <Assistenza />
       <FAQ />
       <CTAFinale />
+    </>
+  )
+}
+
+/* ── Page transition wrapper ──────────────────────────────── */
+function AnimatedRoutes() {
+  const location = useLocation()
+  return (
+    <div key={location.pathname} className="page-enter">
+      <Routes location={location}>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/chi-siamo" element={<ChiSiamo />} />
+      </Routes>
+    </div>
+  )
+}
+
+/* ── App ──────────────────────────────────────────────────── */
+export default function App() {
+  return (
+    <>
+      <Nav />
+      <AnimatedRoutes />
       <Footer />
     </>
   )

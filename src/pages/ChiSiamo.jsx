@@ -118,7 +118,7 @@ export default function ChiSiamo() {
       </section>
 
       {/* ── Il nostro approccio ────────────────────────────── */}
-      <section className="s" style={{ background: '#111' }}>
+      <section className="s" style={{ background: '#184800' }}>
         <div className="c">
           <span className="label label-lime r">Il nostro approccio</span>
           <h2 className="r d1" style={{
@@ -240,7 +240,7 @@ export default function ChiSiamo() {
       </section>
 
       {/* ── Leadership ────────────────────────────────────── */}
-      <section className="s" style={{ background: '#111' }}>
+      <section className="s" style={{ background: '#184800' }}>
         <div className="c">
           <span className="label label-lime r">Leadership</span>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'clamp(40px, 6vw, 80px)', alignItems: 'center' }} className="cs-two-col">
